@@ -222,6 +222,9 @@ class Thorlabs_PM100USB(Thorlabs_PM10x):
     """Alias class for PM100USB; uses the interface of PM10x."""
     PRODUCT_ID = 0x8072
 
+class Thorlabs_PM400(Thorlabs_PM10x):
+    """Alias class for PM100USB; uses the interface of PM10x."""
+    PRODUCT_ID = 0x8075
 
 class Thorlabs_PM101U(Thorlabs_PM10x):
     """Alias class for PM101U; uses the interface of PM10x."""
