@@ -216,7 +216,7 @@ class TransportDescriptorParser:
         return parameters
 
     @staticmethod
-    def _parse_parts(transport_description: str) -> List[str]:
+    def _parse_parts_old(transport_description: str) -> List[str]:
         regex = re.compile(
             r"((?:^([^:]+))|"  # transport interface: i.e. serial:...
             r"(?::\[(.+)[\]$])|"  # enclosed parameter (for example used in ipv6): i.e. ...:[param]:... or ...:[param]
@@ -235,7 +235,36 @@ class TransportDescriptorParser:
         if len(parts) < 2:
             raise QMI_TransportDescriptorException("Invalid transport descriptor {!r}".format(transport_description))
         return parts
-
+        
+    @staticmethod
+    def _parse_parts(transport_description: str) -> List[str]:
+        # Define a regex pattern to accurately capture all parts of the transport description
+        regex = re.compile(
+            r"^([^:]+)"  # Capture the transport interface (before the first colon)
+            r"(?::\[(.+?)\])*"  # Non-greedy capture of enclosed parameters within brackets
+            r"(?::([^:]+))?$"  # Capture the last regular parameter, if exists
+        )
+        parts = []
+    
+        # Find the initial match for the transport interface and any subsequent regular parameter
+        match = regex.match(transport_description)
+        if not match:
+            raise ValueError(f"Invalid transport descriptor {transport_description}")
+    
+        # Add transport interface
+        parts.append(match.group(1))
+    
+        # Process enclosed parameters (within brackets)
+        enclosed_params = re.findall(r"\[(.+?)\]", transport_description)
+        for param in enclosed_params:
+            parts.extend(param.split("]["))
+    
+        # Add the last regular parameter, if exists
+        if match.group(3):
+            parts.append(match.group(3))
+    
+        return parts
+        
     @staticmethod
     def _parse_interface(transport_descriptor: str) -> str:
         parts = TransportDescriptorParser._parse_parts(transport_descriptor)
@@ -1285,7 +1314,7 @@ def create_transport(transport_descriptor: str,
       - UDP connection:    "tcp:host[:port]"
       - TCP connection:    "tcp:host[:port][:connect_timeout=T]"
       - Serial port:       "serial:device[:baudrate=115200][:databits=8][:parity=N][:stopbits=1]"
-      - USBTMC device:     "usbtmc[:vendorid=0xvid][:productid=0xpid]:serialnr=sn"
+      - USBTMC device:     "usbtmc:[:vendorid=0xvid][:productid=0xpid]:serialnr=sn"
       - GPIB device:       "gpib:[board=0]:primary_addr[:secondary_addr=2][:connect_timeout=30.0]"
       - VXI-11 instrument: "vxi11:host"
 
